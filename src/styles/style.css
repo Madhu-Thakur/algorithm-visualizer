@@ -1,0 +1,60 @@
+body {
+  margin: 0;
+  font-family: Arial;
+  background-color: #1e1e2f;
+  color: white;
+}
+
+.navbar {
+  background: #111;
+  padding: 15px;
+  text-align: center;
+}
+
+.control-panel {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.slider {
+  margin-top: 10px;
+}
+
+.array-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 400px;
+  margin-top: 40px;
+}
+
+.array-bar {
+  width: 8px;
+  margin: 0 2px;
+  background-color: #3498db;
+}
+
+.complexity-panel {
+  text-align: center;
+  margin-top: 30px;
+  background: #111;
+  padding: 20px;
+  width: 250px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 8px;
+}
+.array-bar {
+  width: 8px;
+  margin: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.custom-array {
+  margin: 10px;
+}
+
+.custom-array input {
+  padding: 6px;
+  margin-right: 5px;
+}
