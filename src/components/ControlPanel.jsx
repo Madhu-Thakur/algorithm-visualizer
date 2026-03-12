@@ -3,37 +3,61 @@ import React, { useState } from "react";
 const ControlPanel = ({
   generateArray,
   startSort,
+  startStepMode,
+  nextStep,
   speed,
   setSpeed,
   algorithm,
   setAlgorithm,
   size,
   setSize,
-  setArray
+  setArray,
+  isSorting,
+ 
 }) => {
 
   const [inputValue, setInputValue] = useState("");
+  const [error, setError] = useState("");
 
   const handleCustomArray = () => {
+    setError("");
 
-    const arr = inputValue
+    const trimmedInput = inputValue.trim();
+
+    if (!trimmedInput) {
+      setError("Please enter numbers separated by commas (e.g., 5,3,8,1)");
+      return;
+    }
+
+    const arr = trimmedInput
       .split(",")
-      .map(num => Number(num.trim()))
-      .filter(num => !isNaN(num));
+      .map(num => num.trim())
+      .filter(num => num.length > 0)
+      .map(num => {
+        const parsed = Number(num);
+        return isNaN(parsed) ? null : parsed;
+      })
+      .filter(num => num !== null);
 
     if (arr.length === 0) {
-      alert("Please enter valid numbers like 5,3,8,1");
+      setError("Please enter valid numbers separated by commas");
+      return;
+    }
+
+    if (arr.length > 100) {
+      setError("Array size too large. Maximum 100 elements allowed.");
       return;
     }
 
     setArray(arr);
+    setInputValue("");
   };
 
   return (
     <div className="control-panel">
 
       {/* Random Array */}
-      <button onClick={generateArray}>
+      <button onClick={generateArray} disabled={isSorting}>
         Generate Random Array
       </button>
 
@@ -44,9 +68,10 @@ const ControlPanel = ({
           placeholder="Enter numbers: 5,3,8,1"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
+          disabled={isSorting}
         />
 
-        <button onClick={handleCustomArray}>
+        <button onClick={handleCustomArray} disabled={isSorting}>
           Set Array
         </button>
       </div>
@@ -55,6 +80,7 @@ const ControlPanel = ({
       <select
         value={algorithm}
         onChange={(e) => setAlgorithm(e.target.value)}
+        disabled={isSorting}
       >
         <option value="bubble">Bubble Sort</option>
         <option value="selection">Selection Sort</option>
@@ -64,8 +90,18 @@ const ControlPanel = ({
       </select>
 
       {/* Start Sorting */}
-      <button onClick={startSort}>
-        Start Sorting
+      <button onClick={startSort} disabled={isSorting}>
+        {isSorting ? "Sorting..." : "Start Sorting"}
+      </button>
+
+      {/* Step Mode */}
+      <button onClick={startStepMode} disabled={isSorting}>
+        Step Mode
+      </button>
+
+      {/* Next Step */}
+      <button onClick={nextStep}>
+        Next Step
       </button>
 
       {/* Speed Slider */}
@@ -91,6 +127,12 @@ const ControlPanel = ({
           onChange={(e) => setSize(Number(e.target.value))}
         />
       </div>
+
+      {error && (
+        <div style={{ color: "red", marginTop: "5px" }}>
+          {error}
+        </div>
+      )}
 
     </div>
   );
