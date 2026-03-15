@@ -1,5 +1,4 @@
 export const mergeSort = async (array, setArray, speed, setActive, setSwapping, setSorted) => {
-
   let arr = [...array];
 
   const merge = async (left, mid, right) => {
@@ -60,9 +59,20 @@ export const mergeSort = async (array, setArray, speed, setActive, setSwapping, 
 
     // Merge the sorted halves
     await merge(left, mid, right);
+    
+    // Mark the merged portion as sorted
+    setSorted(prev => {
+      const newSorted = [...prev];
+      for (let k = left; k <= right; k++) {
+        if (!newSorted.includes(k)) {
+          newSorted.push(k);
+        }
+      }
+      return newSorted;
+    });
   };
 
-  // Mark all elements as active during the sorting process
+  // Clear states at start
   setActive([]);
   setSwapping([]);
   setSorted([]);
@@ -72,4 +82,5 @@ export const mergeSort = async (array, setArray, speed, setActive, setSwapping, 
   // Mark all elements as sorted when complete
   setSorted(Array.from({ length: arr.length }, (_, i) => i));
   setActive([]);
+  setSwapping([]);
 };

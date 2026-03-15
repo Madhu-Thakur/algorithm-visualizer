@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Mode Logic Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .status { font-weight: bold; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { margin: 5px; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>Step Mode Logic Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Start Sorting Button State</h3>
+        <p>Expected: Start Sorting should be enabled during Step Mode</p>
+        <div id="test1-result" class="status">Not tested</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Step Mode Auto-Completion</h3>
+        <p>Expected: Step Mode should auto-turn off when final step is reached</p>
+        <div id="test2-result" class="status">Not tested</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Next Step Button State</h3>
+        <p>Expected: Next Step should be disabled after sorting completes</p>
+        <div id="test3-result" class="status">Not tested</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 4: Visual Completion Indicator</h3>
+        <p>Expected: Should show completion message when Step Mode finishes</p>
+        <div id="test4-result" class="status">Not tested</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Manual Testing Instructions:</h3>
+        <ol>
+            <li>Open the Algorithm Visualizer in your browser</li>
+            <li>Click "Step Mode" button</li>
+            <li>Verify "Start Sorting" button remains enabled</li>
+            <li>Click "Next Step" multiple times until sorting completes</li>
+            <li>Verify Step Mode auto-turns off</li>
+            <li>Verify "Next Step" button becomes disabled</li>
+            <li>Verify all bars turn green</li>
+            <li>Verify completion message appears</li>
+        </ol>
+    </div>
+
+    <script>
+        // This is a simple test page to document the expected behavior
+        // The actual testing should be done manually in the browser
+        
+        console.log("Step Mode Logic Test loaded");
+        console.log("Please follow the manual testing instructions above");
+    </script>
+</body>
+</html>

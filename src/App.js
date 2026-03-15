@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import "./styles/style.css";
+import "./styles/design-system.css";
 
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Navbar from "./components/Navbar";
 import Visualizer from "./components/Visualizer";
 import ControlPanel from "./components/ControlPanel";
@@ -12,6 +13,10 @@ import { mergeSort } from "./algorithms/mergeSort";
 import { quickSort } from "./algorithms/quickSort";
 
 import { bubbleSortSteps } from "./algorithms/bubbleSortSteps";
+import { selectionSortSteps } from "./algorithms/selectionSortSteps";
+import { insertionSortSteps } from "./algorithms/insertionSortSteps";
+import { mergeSortSteps } from "./algorithms/mergeSortSteps";
+import { quickSortSteps } from "./algorithms/quickSortSteps";
 
 import ComplexityInfo from "./components/ComplexityInfo";
 import ComparisonVisualizer from "./components/ComparisonVisualizer";
@@ -33,16 +38,29 @@ function App() {
   const [sorted, setSorted] = useState([]);
 
   const [isSorting, setIsSorting] = useState(false);
+  const [isStepMode, setIsStepMode] = useState(false);
   const [algorithm, setAlgorithm] = useState("bubble");
+  const [showValues, setShowValues] = useState(false);
 
   const [error, setError] = useState("");
 
   const [mode, setMode] = useState("sorting");
 
+  // Handle custom array input
+  const handleCustomArray = (arr) => {
+    setError("");
+    setIsStepMode(false);
+    setArray(arr);
+    setSteps([]);
+    setCurrentStep(0);
+    setShowValues(true);
+  };
+
   // Generate random array
   const generateArray = useCallback(() => {
 
     setError("");
+    setIsStepMode(false);
 
     const arr = [];
 
@@ -53,6 +71,7 @@ function App() {
     setArray(arr);
     setSteps([]);
     setCurrentStep(0);
+    setShowValues(false);
 
   }, [size]);
 
@@ -67,7 +86,10 @@ function App() {
 
     setError("");
     setIsSorting(true);
+    setIsStepMode(false);
 
+    setSteps([]);
+    setCurrentStep(0);
     setSorted([]);
     setActive([]);
     setSwapping([]);
@@ -109,124 +131,248 @@ function App() {
 
   // Step Mode
   const startStepMode = () => {
+    let s = [];
 
-    if (algorithm !== "bubble") {
-
-      alert("Step mode currently supports Bubble Sort only");
-      return;
-
+    if (algorithm === "bubble") {
+      s = bubbleSortSteps(array);
+    } else if (algorithm === "selection") {
+      s = selectionSortSteps(array);
+    } else if (algorithm === "insertion") {
+      s = insertionSortSteps(array);
+    } else if (algorithm === "merge") {
+      s = mergeSortSteps(array);
+    } else if (algorithm === "quick") {
+      s = quickSortSteps(array);
     }
-
-    const s = bubbleSortSteps(array);
 
     setSteps(s);
     setCurrentStep(0);
-
+    setActive([]);
+    setSwapping([]);
+    setSorted([]);
+    setIsStepMode(true);
   };
 
   // Execute one step
   const nextStep = () => {
-
     if (currentStep >= steps.length) return;
 
     const step = steps[currentStep];
+    const newArray = [...array];
 
-    if (step.type === "swap") {
+    switch (step.type) {
+      case "swap":
+        // Handle swap operations
+        if (step.indices && step.indices.length === 2) {
+          const [i, j] = step.indices;
+          const temp = newArray[i];
+          newArray[i] = newArray[j];
+          newArray[j] = temp;
+          setArray(newArray);
+          setActive([i, j]);
+          setSwapping([i, j]);
+        }
+        break;
 
-      const newArray = [...array];
+      case "shift":
+        // Handle shift operations (insertion sort)
+        if (step.indices && step.values) {
+          const [pos] = step.indices;
+          const [, value] = step.values;
+          newArray[pos] = value;
+          setArray(newArray);
+          setActive([]);
+          setSwapping([pos]);
+        }
+        break;
 
-      const temp = newArray[step.i];
-      newArray[step.i] = newArray[step.j];
-      newArray[step.j] = temp;
+      case "insert":
+        // Handle insert operations (insertion sort)
+        if (step.indices && step.values) {
+          const [pos] = step.indices;
+          const [, value] = step.values;
+          newArray[pos] = value;
+          setArray(newArray);
+          setActive([]);
+          setSwapping([pos]);
+        }
+        break;
 
-      setArray(newArray);
+      case "merge":
+        // Handle merge operations (merge sort)
+        if (step.indices && step.values) {
+          const [pos] = step.indices;
+          const [, value] = step.values;
+          newArray[pos] = value;
+          setArray(newArray);
+          setActive([]);
+          setSwapping([pos]);
+        }
+        break;
 
+      case "compare":
+        // Handle comparison operations
+        if (step.indices) {
+          setActive(step.indices);
+          setSwapping([]);
+        }
+        break;
+
+      case "active":
+        // Handle active state changes
+        if (step.indices) {
+          setActive(step.indices);
+          setSwapping([]);
+        }
+        break;
+
+      case "update_min":
+        // Handle minimum updates (selection sort)
+        if (step.indices) {
+          setActive(step.indices);
+          setSwapping([]);
+        }
+        break;
+
+      case "pivot":
+        // Handle pivot selection (quick sort)
+        if (step.indices) {
+          setActive(step.indices);
+          setSwapping([]);
+        }
+        break;
+
+      case "sorted":
+        // Handle sorted state updates
+        if (step.indices) {
+          setSorted(prev => {
+            const newSorted = [...prev];
+            step.indices.forEach(idx => {
+              if (!newSorted.includes(idx)) {
+                newSorted.push(idx);
+              }
+            });
+            return newSorted;
+          });
+          setActive([]);
+          setSwapping([]);
+        }
+        break;
+
+      default:
+        // Default case - just update active state
+        if (step.indices) {
+          setActive(step.indices);
+        }
+        break;
     }
 
-    setActive([step.i, step.j]);
+    // Clear swapping state after a short delay for visual effect
+    if (step.type !== "swap" && step.type !== "shift" && step.type !== "insert" && step.type !== "merge") {
+      setTimeout(() => {
+        setSwapping([]);
+      }, 100);
+    }
 
     setCurrentStep(prev => prev + 1);
 
+    // Check if this was the final step and auto-complete sorting
+    if (currentStep >= steps.length - 1) {
+      // Mark all elements as sorted when step mode completes
+      setSorted(Array.from({ length: array.length }, (_, i) => i));
+      // Auto-turn off step mode
+      setIsStepMode(false);
+      // Clear active states
+      setActive([]);
+      setSwapping([]);
+    }
   };
 
   return (
 
-    <div>
+    <ThemeProvider>
+      <div className="app-container">
 
-      <Navbar />
+        <Navbar />
 
-      {/* Tabs */}
-      <div className="mode-tabs">
+        {/* Tabs */}
+        <div className="mode-tabs">
 
-        <button onClick={() => setMode("sorting")}>
-          Sorting
-        </button>
+          <button onClick={() => setMode("sorting")}>
+            Sorting
+          </button>
 
-        <button onClick={() => setMode("pathfinding")}>
-          Pathfinding
-        </button>
+          <button onClick={() => setMode("pathfinding")}>
+            Pathfinding
+          </button>
 
-      </div>
-
-      {error && (
-
-        <div
-          style={{
-            color: "red",
-            textAlign: "center",
-            margin: "10px",
-          }}
-        >
-          {error}
         </div>
 
-      )}
+        {error && (
 
-      {/* Sorting Mode */}
-      {mode === "sorting" && (
+          <div
+            style={{
+              color: "red",
+              textAlign: "center",
+              margin: "10px",
+            }}
+          >
+            {error}
+          </div>
 
-        <>
+        )}
 
-          <ControlPanel
-            generateArray={generateArray}
-            startSort={startSort}
-            startStepMode={startStepMode}
-            nextStep={nextStep}
-            speed={speed}
-            setSpeed={setSpeed}
-            algorithm={algorithm}
-            setAlgorithm={setAlgorithm}
-            size={size}
-            setSize={setSize}
-            setArray={setArray}
-            isSorting={isSorting}
-          />
+        {/* Sorting Mode */}
+        {mode === "sorting" && (
 
-          <Visualizer
-            array={array}
-            active={active}
-            swapping={swapping}
-            sorted={sorted}
-          />
+          <>
 
-          <ComplexityInfo algorithm={algorithm} />
+            <ControlPanel
+              generateArray={generateArray}
+              startSort={startSort}
+              startStepMode={startStepMode}
+              nextStep={nextStep}
+              speed={speed}
+              setSpeed={setSpeed}
+              algorithm={algorithm}
+              setAlgorithm={setAlgorithm}
+              size={size}
+              setSize={setSize}
+              handleCustomArray={handleCustomArray}
+              isSorting={isSorting}
+              isStepMode={isStepMode}
+              currentStep={currentStep}
+              steps={steps}
+              setShowValues={setShowValues}
+            />
 
-          <ComparisonVisualizer array={array} speed={speed} />
+            <Visualizer
+              array={array}
+              active={active}
+              swapping={swapping}
+              sorted={sorted}
+              showValues={showValues}
+            />
 
-          <SortingRace array={array} speed={speed} />
+            <ComplexityInfo algorithm={algorithm} />
 
-        </>
+            <ComparisonVisualizer array={array} speed={speed} />
 
-      )}
+            <SortingRace array={array} speed={speed} />
 
-      {/* Pathfinding Mode */}
-      {mode === "pathfinding" && (
+          </>
 
-        <GridVisualizer />
+        )}
 
-      )}
+        {/* Pathfinding Mode */}
+        {mode === "pathfinding" && (
 
-    </div>
+          <GridVisualizer />
+
+        )}
+
+      </div>
+    </ThemeProvider>
 
   );
 

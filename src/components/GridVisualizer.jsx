@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import GridCell from "./GridCell";
+import { useTheme } from "../contexts/ThemeContext";
 import { bfs } from "../algorithms/graph/bfs";
 import { dfs } from "../algorithms/graph/dfs";
 import { dijkstra } from "../algorithms/graph/dijkstra";
@@ -32,11 +33,16 @@ const createGrid = () => {
 };
 
 const GridVisualizer = () => {
+  const { isDark } = useTheme();
   const [grid, setGrid] = useState(createGrid());
   const [mouseDown, setMouseDown] = useState(false);
   const [algorithm, setAlgorithm] = useState("bfs");
+  const [isRunning, setIsRunning] = useState(false);
 
-  const runAlgorithm = () => {
+  const runAlgorithm = async () => {
+    if (isRunning) return;
+    
+    setIsRunning(true);
     const start = { row: 0, col: 0 };
     const goal = { row: ROWS - 1, col: COLS - 1 };
 
@@ -58,22 +64,25 @@ const GridVisualizer = () => {
       order = astar(grid, start, goal);
     }
 
-    order.forEach((node, i) => {
-      setTimeout(() => {
-        setGrid((prev) => {
-          const newGrid = prev.map((r) => r.map((c) => ({ ...c })));
+    // Animate the pathfinding
+    for (let i = 0; i < order.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      setGrid((prev) => {
+        const newGrid = prev.map((r) => r.map((c) => ({ ...c })));
 
-          if (
-            newGrid[node.row][node.col].type !== "start" &&
-            newGrid[node.row][node.col].type !== "goal"
-          ) {
-            newGrid[node.row][node.col].type = "visited";
-          }
+        if (
+          newGrid[order[i].row][order[i].col].type !== "start" &&
+          newGrid[order[i].row][order[i].col].type !== "goal"
+        ) {
+          newGrid[order[i].row][order[i].col].type = "visited";
+        }
 
-          return newGrid;
-        });
-      }, i * 40);
-    });
+        return newGrid;
+      });
+    }
+    
+    setIsRunning(false);
   };
 
   const toggleWall = (row, col) => {
@@ -117,52 +126,124 @@ const GridVisualizer = () => {
   };
 
   return (
-    <div style={{ marginTop: 40 }} onMouseUp={() => setMouseDown(false)}>
-      <h2 style={{ textAlign: "center" }}>Pathfinding Visualizer</h2>
+    <div className="card pathfinding-visualizer fade-in" onMouseUp={() => setMouseDown(false)}>
+      <div className="section-title">
+        <h2>
+          <span className="pathfinding-icon">🗺️</span>
+          Pathfinding Visualizer
+        </h2>
+        <div className="pathfinding-actions">
+          <button 
+            className="btn btn-primary"
+            onClick={runAlgorithm}
+            disabled={isRunning}
+          >
+            {isRunning ? (
+              <>
+                <span className="loading"></span>
+                Running...
+              </>
+            ) : (
+              `🚀 Run ${algorithm.toUpperCase()}`
+            )}
+          </button>
+        </div>
+      </div>
 
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <select
-          value={algorithm}
-          onChange={(e) => setAlgorithm(e.target.value)}
+      <div className="pathfinding-controls">
+        <div className="control-group">
+          <label className="label">Algorithm</label>
+          <select
+            className="input"
+            value={algorithm}
+            onChange={(e) => setAlgorithm(e.target.value)}
+            disabled={isRunning}
+          >
+            <option value="bfs">Breadth-First Search (BFS)</option>
+            <option value="dfs">Depth-First Search (DFS)</option>
+            <option value="dijkstra">Dijkstra's Algorithm</option>
+            <option value="astar">A* Algorithm</option>
+          </select>
+        </div>
+
+        <div className="control-buttons">
+          <button 
+            className="btn btn-secondary"
+            onClick={generateMaze}
+            disabled={isRunning}
+          >
+            🎲 Generate Maze
+          </button>
+          <button 
+            className="btn btn-warning"
+            onClick={clearGrid}
+            disabled={isRunning}
+          >
+            🧹 Clear Grid
+          </button>
+        </div>
+      </div>
+
+      <div className="legend">
+        <span className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: 'var(--grid-start)' }}></span>
+          Start
+        </span>
+        <span className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: 'var(--grid-goal)' }}></span>
+          Goal
+        </span>
+        <span className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: 'var(--grid-wall)' }}></span>
+          Wall
+        </span>
+        <span className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: 'var(--grid-visited)' }}></span>
+          Visited
+        </span>
+      </div>
+
+      <div className="grid-container">
+        <div
+          className="grid-wrapper"
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${COLS}, 25px)`,
+            justifyContent: "center",
+            gap: "1px",
+            background: "var(--bg-tertiary)",
+            padding: "10px",
+            borderRadius: "var(--border-radius-lg)",
+            border: "1px solid var(--bg-tertiary)"
+          }}
         >
-          <option value="bfs">BFS</option>
-          <option value="dfs">DFS</option>
-          <option value="dijkstra">Dijkstra</option>
-          <option value="astar">A*</option>
-        </select>
-      </div>
-
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        {/* <button onClick={runBFS}>Run BFS</button> */}
-        <button onClick={runAlgorithm}>Run {algorithm.toUpperCase()}</button>
-      </div>
-
-      <button onClick={generateMaze}>Generate Maze</button>
-
-      <button onClick={clearGrid}>Clear Grid</button>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${COLS}, 25px)`,
-          justifyContent: "center",
-        }}
-      >
-        {grid.flat().map((cell, index) => (
-          <GridCell
-            key={index}
-            type={cell.type}
-            onMouseDown={() => {
-              setMouseDown(true);
-              toggleWall(cell.row, cell.col);
-            }}
-            onMouseEnter={() => {
-              if (mouseDown) {
+          {grid.flat().map((cell, index) => (
+            <GridCell
+              key={index}
+              type={cell.type}
+              onMouseDown={() => {
+                setMouseDown(true);
                 toggleWall(cell.row, cell.col);
-              }
-            }}
-          />
-        ))}
+              }}
+              onMouseEnter={() => {
+                if (mouseDown) {
+                  toggleWall(cell.row, cell.col);
+                }
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="pathfinding-explanation">
+        <p>
+          <strong>Instructions:</strong> Click and drag to create walls. 
+          Select an algorithm and click "Run" to visualize the pathfinding process.
+        </p>
+        <div className="pathfinding-tips">
+          <span className="tip">💡 Tip:</span> Try creating complex mazes to see 
+          how different algorithms handle obstacles!
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 export const bubbleSort = async (
   array,
   setArray,
@@ -9,17 +8,20 @@ export const bubbleSort = async (
 ) => {
 
   let arr = [...array];
+  let sortedIndices = [];
 
   for (let i = 0; i < arr.length; i++) {
 
     for (let j = 0; j < arr.length - i - 1; j++) {
 
+      // show comparison
       setActive([j, j + 1]);
 
       await new Promise(r => setTimeout(r, speed));
 
       if (arr[j] > arr[j + 1]) {
 
+        // show swap
         setSwapping([j, j + 1]);
 
         let temp = arr[j];
@@ -32,14 +34,17 @@ export const bubbleSort = async (
 
       }
 
+      // reset states
       setSwapping([]);
+      // setActive([]);
 
     }
+    setActive([]);
 
-    setSorted(prev => [...prev, arr.length - i - 1]);
+    // mark sorted element
+    sortedIndices.push(arr.length - i - 1);
+    setSorted([...sortedIndices]);
 
   }
-
-  setActive([]);
 
 };
