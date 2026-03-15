@@ -9,18 +9,34 @@ const ComparisonVisualizer = ({ array, speed }) => {
   const { isDark } = useTheme();
   const [arrayA, setArrayA] = useState([...array]);
   const [arrayB, setArrayB] = useState([...array]);
+  
+  // State management for color visualization
+  const [activeA, setActiveA] = useState([]);
+  const [swappingA, setSwappingA] = useState([]);
+  const [sortedA, setSortedA] = useState([]);
+  
+  const [activeB, setActiveB] = useState([]);
+  const [swappingB, setSwappingB] = useState([]);
+  const [sortedB, setSortedB] = useState([]);
+  
   const [isComparing, setIsComparing] = useState(false);
 
   const startComparison = async () => {
     setIsComparing(true);
     
-    // Reset arrays
+    // Reset arrays and states
     setArrayA([...array]);
     setArrayB([...array]);
+    setActiveA([]);
+    setSwappingA([]);
+    setSortedA([]);
+    setActiveB([]);
+    setSwappingB([]);
+    setSortedB([]);
 
     await Promise.all([
-      bubbleSort([...array], setArrayA, speed, () => {}, () => {}, () => {}),
-      mergeSort([...array], setArrayB, speed, () => {}, () => {}, () => {})
+      bubbleSort([...array], setArrayA, speed, setActiveA, setSwappingA, setSortedA),
+      mergeSort([...array], setArrayB, speed, setActiveB, setSwappingB, setSortedB)
     ]);
 
     setIsComparing(false);
@@ -64,9 +80,9 @@ const ComparisonVisualizer = ({ array, speed }) => {
           </div>
           <Visualizer
             array={arrayA}
-            active={[]}
-            swapping={[]}
-            sorted={[]}
+            active={activeA}
+            swapping={swappingA}
+            sorted={sortedA}
           />
         </div>
 
@@ -82,9 +98,9 @@ const ComparisonVisualizer = ({ array, speed }) => {
           </div>
           <Visualizer
             array={arrayB}
-            active={[]}
-            swapping={[]}
-            sorted={[]}
+            active={activeB}
+            swapping={swappingB}
+            sorted={sortedB}
           />
         </div>
       </div>

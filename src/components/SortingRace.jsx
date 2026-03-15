@@ -11,6 +11,20 @@ const SortingRace = ({ array, speed }) => {
   const [bubbleArray, setBubbleArray] = useState([...array]);
   const [mergeArray, setMergeArray] = useState([...array]);
   const [quickArray, setQuickArray] = useState([...array]);
+  
+  // State management for color visualization
+  const [activeBubble, setActiveBubble] = useState([]);
+  const [swappingBubble, setSwappingBubble] = useState([]);
+  const [sortedBubble, setSortedBubble] = useState([]);
+  
+  const [activeMerge, setActiveMerge] = useState([]);
+  const [swappingMerge, setSwappingMerge] = useState([]);
+  const [sortedMerge, setSortedMerge] = useState([]);
+  
+  const [activeQuick, setActiveQuick] = useState([]);
+  const [swappingQuick, setSwappingQuick] = useState([]);
+  const [sortedQuick, setSortedQuick] = useState([]);
+  
   const [winner, setWinner] = useState("");
   const [isRacing, setIsRacing] = useState(false);
 
@@ -18,21 +32,30 @@ const SortingRace = ({ array, speed }) => {
     setIsRacing(true);
     setWinner("");
 
-    // Reset arrays
+    // Reset arrays and states
     setBubbleArray([...array]);
     setMergeArray([...array]);
     setQuickArray([...array]);
+    setActiveBubble([]);
+    setSwappingBubble([]);
+    setSortedBubble([]);
+    setActiveMerge([]);
+    setSwappingMerge([]);
+    setSortedMerge([]);
+    setActiveQuick([]);
+    setSwappingQuick([]);
+    setSortedQuick([]);
 
-    const runAlgo = async (name, algo, setArr) => {
+    const runAlgo = async (name, algo, setArr, setActive, setSwapping, setSorted) => {
       const start = performance.now();
 
       await algo(
         [...array],
         setArr,
         speed,
-        () => {},
-        () => {},
-        () => {}
+        setActive,
+        setSwapping,
+        setSorted
       );
 
       const end = performance.now();
@@ -44,9 +67,9 @@ const SortingRace = ({ array, speed }) => {
     };
 
     const results = await Promise.all([
-      runAlgo("Bubble Sort", bubbleSort, setBubbleArray),
-      runAlgo("Merge Sort", mergeSort, setMergeArray),
-      runAlgo("Quick Sort", quickSort, setQuickArray)
+      runAlgo("Bubble Sort", bubbleSort, setBubbleArray, setActiveBubble, setSwappingBubble, setSortedBubble),
+      runAlgo("Merge Sort", mergeSort, setMergeArray, setActiveMerge, setSwappingMerge, setSortedMerge),
+      runAlgo("Quick Sort", quickSort, setQuickArray, setActiveQuick, setSwappingQuick, setSortedQuick)
     ]);
 
     results.sort((a, b) => a.time - b.time);
@@ -104,9 +127,9 @@ const SortingRace = ({ array, speed }) => {
           </div>
           <Visualizer
             array={bubbleArray}
-            active={[]}
-            swapping={[]}
-            sorted={[]}
+            active={activeBubble}
+            swapping={swappingBubble}
+            sorted={sortedBubble}
           />
         </div>
 
@@ -121,9 +144,9 @@ const SortingRace = ({ array, speed }) => {
           </div>
           <Visualizer
             array={mergeArray}
-            active={[]}
-            swapping={[]}
-            sorted={[]}
+            active={activeMerge}
+            swapping={swappingMerge}
+            sorted={sortedMerge}
           />
         </div>
 
@@ -138,9 +161,9 @@ const SortingRace = ({ array, speed }) => {
           </div>
           <Visualizer
             array={quickArray}
-            active={[]}
-            swapping={[]}
-            sorted={[]}
+            active={activeQuick}
+            swapping={swappingQuick}
+            sorted={sortedQuick}
           />
         </div>
       </div>
