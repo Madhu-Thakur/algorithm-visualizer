@@ -1,10 +1,10 @@
 export const dijkstra = (grid, start, goal) => {
-
   const rows = grid.length;
   const cols = grid[0].length;
 
   const distances = {};
   const visited = new Set();
+  const parents = {};
   const order = [];
 
   const key = (r,c) => `${r}-${c}`;
@@ -20,7 +20,6 @@ export const dijkstra = (grid, start, goal) => {
   const queue = [start];
 
   while(queue.length>0){
-
     queue.sort((a,b)=>distances[key(a.row,a.col)] - distances[key(b.row,b.col)]);
 
     const node = queue.shift();
@@ -43,7 +42,6 @@ export const dijkstra = (grid, start, goal) => {
     ];
 
     for(const [dr,dc] of directions){
-
       const nr=node.row+dr;
       const nc=node.col+dc;
 
@@ -52,23 +50,29 @@ export const dijkstra = (grid, start, goal) => {
         nc>=0 && nc<cols &&
         grid[nr][nc].type!=="wall"
       ){
-
         const newDist = distances[id] + 1;
 
         if(newDist < distances[key(nr,nc)]){
-
           distances[key(nr,nc)] = newDist;
-
+          parents[key(nr,nc)] = node;
           queue.push({row:nr,col:nc});
-
         }
-
       }
-
     }
-
   }
 
-  return order;
+  // Reconstruct path from goal to start
+  const path = [];
+  let current = goal;
+  const goalKey = key(goal.row, goal.col);
+  
+  if (parents[goalKey]) {
+    while (current) {
+      path.unshift(current);
+      const currentKey = key(current.row, current.col);
+      current = parents[currentKey];
+    }
+  }
 
+  return { order, path };
 };

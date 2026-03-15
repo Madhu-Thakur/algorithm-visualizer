@@ -38,6 +38,10 @@ const GridVisualizer = () => {
   const [mouseDown, setMouseDown] = useState(false);
   const [algorithm, setAlgorithm] = useState("bfs");
   const [isRunning, setIsRunning] = useState(false);
+  const [speed, setSpeed] = useState(50);
+  const [isStepMode, setIsStepMode] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [algorithmData, setAlgorithmData] = useState(null);
 
   const runAlgorithm = async () => {
     if (isRunning) return;
@@ -46,37 +50,81 @@ const GridVisualizer = () => {
     const start = { row: 0, col: 0 };
     const goal = { row: ROWS - 1, col: COLS - 1 };
 
-    let order = [];
+    let result = null;
 
     if (algorithm === "bfs") {
-      order = bfs(grid, start, goal);
+      result = bfs(grid, start, goal);
+    } else if (algorithm === "dfs") {
+      result = dfs(grid, start, goal);
+    } else if (algorithm === "dijkstra") {
+      result = dijkstra(grid, start, goal);
+    } else if (algorithm === "astar") {
+      result = astar(grid, start, goal);
     }
 
-    if (algorithm === "dfs") {
-      order = dfs(grid, start, goal);
-    }
+    const { order, path } = result;
 
-    if (algorithm === "dijkstra") {
-      order = dijkstra(grid, start, goal);
-    }
-
-    if (algorithm === "astar") {
-      order = astar(grid, start, goal);
-    }
-
-    // Animate the pathfinding
+    // Animate the pathfinding with enhanced visualization
     for (let i = 0; i < order.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 100 - speed));
       
       setGrid((prev) => {
         const newGrid = prev.map((r) => r.map((c) => ({ ...c })));
 
-        if (
-          newGrid[order[i].row][order[i].col].type !== "start" &&
-          newGrid[order[i].row][order[i].col].type !== "goal"
-        ) {
-          newGrid[order[i].row][order[i].col].type = "visited";
+        // Mark current node
+        if (i < order.length) {
+          const currentNode = order[i];
+          if (
+            newGrid[currentNode.row][currentNode.col].type !== "start" &&
+            newGrid[currentNode.row][currentNode.col].type !== "goal"
+          ) {
+            newGrid[currentNode.row][currentNode.col].type = "current";
+          }
         }
+
+        // Mark previously visited nodes
+        for (let j = 0; j < i; j++) {
+          const visitedNode = order[j];
+          if (
+            newGrid[visitedNode.row][visitedNode.col].type !== "start" &&
+            newGrid[visitedNode.row][visitedNode.col].type !== "goal" &&
+            newGrid[visitedNode.row][visitedNode.col].type !== "current"
+          ) {
+            newGrid[visitedNode.row][visitedNode.col].type = "visited";
+          }
+        }
+
+        return newGrid;
+      });
+    }
+
+    // Show the final path
+    if (path && path.length > 0) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setGrid((prev) => {
+        const newGrid = prev.map((r) => r.map((c) => ({ ...c })));
+
+        // Mark the path
+        path.forEach(node => {
+          if (
+            newGrid[node.row][node.col].type !== "start" &&
+            newGrid[node.row][node.col].type !== "goal"
+          ) {
+            newGrid[node.row][node.col].type = "path";
+          }
+        });
+
+        // Keep visited nodes as visited (not current)
+        order.forEach(node => {
+          if (
+            newGrid[node.row][node.col].type !== "start" &&
+            newGrid[node.row][node.col].type !== "goal" &&
+            newGrid[node.row][node.col].type !== "path"
+          ) {
+            newGrid[node.row][node.col].type = "visited";
+          }
+        });
 
         return newGrid;
       });
@@ -166,6 +214,25 @@ const GridVisualizer = () => {
           </select>
         </div>
 
+        <div className="control-group">
+          <label className="label">Speed Control</label>
+          <div className="slider-group">
+            <div className="slider-label">
+              <span>Slow</span>
+              <span>Fast</span>
+            </div>
+            <input
+              type="range"
+              min="10"
+              max="90"
+              value={speed}
+              onChange={(e) => setSpeed(parseInt(e.target.value))}
+              disabled={isRunning}
+              className="input"
+            />
+          </div>
+        </div>
+
         <div className="control-buttons">
           <button 
             className="btn btn-secondary"
@@ -201,6 +268,14 @@ const GridVisualizer = () => {
           <span className="legend-color" style={{ backgroundColor: 'var(--grid-visited)' }}></span>
           Visited
         </span>
+        <span className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: 'var(--grid-current)' }}></span>
+          Current
+        </span>
+        <span className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: 'var(--grid-path)' }}></span>
+          Path
+        </span>
       </div>
 
       <div className="grid-container">
@@ -232,6 +307,102 @@ const GridVisualizer = () => {
               }}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Algorithm Explanation Panel */}
+      <div className="algorithm-explanation">
+        <h3>How {algorithm.toUpperCase()} Works</h3>
+        {algorithm === 'bfs' && (
+          <div className="explanation-content">
+            <p><strong>Breadth-First Search (BFS)</strong> explores all nodes at the current depth before moving to nodes at the next depth level.</p>
+            <ul>
+              <li>✅ <strong>Guaranteed shortest path</strong> in unweighted graphs</li>
+              <li>🔄 Uses a <strong>queue</strong> (FIFO - First In, First Out)</li>
+              <li>🌊 Explores <strong>layer by layer</strong> like ripples in water</li>
+              <li>🧠 <strong>Complete</strong> - will always find a solution if one exists</li>
+            </ul>
+            <div className="explanation-tips">
+              <span className="tip">🎯 Best for:</span> Finding shortest paths in unweighted mazes
+            </div>
+          </div>
+        )}
+        {algorithm === 'dfs' && (
+          <div className="explanation-content">
+            <p><strong>Depth-First Search (DFS)</strong> explores as far as possible along each branch before backtracking.</p>
+            <ul>
+              <li>❌ <strong>Not guaranteed</strong> to find the shortest path</li>
+              <li>🔄 Uses a <strong>stack</strong> (LIFO - Last In, First Out)</li>
+              <li>🌲 Explores <strong>deep first</strong>, like exploring a maze blindly</li>
+              <li>🧠 <strong>Complete</strong> - will find a solution if one exists</li>
+            </ul>
+            <div className="explanation-tips">
+              <span className="tip">🎯 Best for:</span> Exploring all possible paths, maze generation
+            </div>
+          </div>
+        )}
+        {algorithm === 'dijkstra' && (
+          <div className="explanation-content">
+            <p><strong>Dijkstra's Algorithm</strong> finds the shortest path in weighted graphs by always exploring the closest unvisited node.</p>
+            <ul>
+              <li>✅ <strong>Guaranteed shortest path</strong> in weighted graphs</li>
+              <li>🔄 Uses a <strong>priority queue</strong> (min-heap)</li>
+              <li>🎯 Always picks the <strong>closest</strong> unvisited node</li>
+              <li>🧠 <strong>Complete</strong> and <strong>optimal</strong></li>
+            </ul>
+            <div className="explanation-tips">
+              <span className="tip">🎯 Best for:</span> Finding shortest paths with different movement costs
+            </div>
+          </div>
+        )}
+        {algorithm === 'astar' && (
+          <div className="explanation-content">
+            <p><strong>A* Algorithm</strong> is an informed search that uses heuristics to guide the search toward the goal.</p>
+            <ul>
+              <li>✅ <strong>Guaranteed shortest path</strong> if heuristic is admissible</li>
+              <li>🔄 Uses a <strong>priority queue</strong> with f(n) = g(n) + h(n)</li>
+              <li>🎯 <strong>g(n)</strong> = cost from start, <strong>h(n)</strong> = estimated cost to goal</li>
+              <li>🧠 <strong>Most efficient</strong> when good heuristics are available</li>
+            </ul>
+            <div className="explanation-tips">
+              <span className="tip">🎯 Best for:</span> Fast pathfinding with good heuristics (like Manhattan distance)
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Beginner Tutorial Panel */}
+      <div className="tutorial-panel">
+        <h3>🚀 Beginner's Guide</h3>
+        <div className="tutorial-steps">
+          <div className="tutorial-step">
+            <div className="step-number">1</div>
+            <div className="step-content">
+              <strong>Create a Maze:</strong> Click and drag on the grid to draw walls. 
+              Try making a simple maze with a clear path from start (green) to goal (red).
+            </div>
+          </div>
+          <div className="tutorial-step">
+            <div className="step-number">2</div>
+            <div className="step-content">
+              <strong>Choose an Algorithm:</strong> Select BFS for shortest path, 
+              DFS for exploration, Dijkstra for weighted paths, or A* for smart searching.
+            </div>
+          </div>
+          <div className="tutorial-step">
+            <div className="step-number">3</div>
+            <div className="step-content">
+              <strong>Watch the Magic:</strong> Click "Run" and watch how each algorithm 
+              explores the maze differently. Notice the current node (purple) and visited nodes (blue).
+            </div>
+          </div>
+          <div className="tutorial-step">
+            <div className="step-number">4</div>
+            <div className="step-content">
+              <strong>See the Result:</strong> The yellow path shows the final solution! 
+              Compare how different algorithms find different (but valid) paths.
+            </div>
+          </div>
         </div>
       </div>
 

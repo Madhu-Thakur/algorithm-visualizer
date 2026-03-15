@@ -1,5 +1,4 @@
 export const bfs = (grid, start, goal) => {
-
   const queue = [start];
   const visited = new Set();
   const parents = {};
@@ -10,9 +9,7 @@ export const bfs = (grid, start, goal) => {
   visited.add(key(start.row, start.col));
 
   while (queue.length > 0) {
-
     const node = queue.shift();
-
     order.push(node);
 
     if (node.row === goal.row && node.col === goal.col) {
@@ -27,7 +24,6 @@ export const bfs = (grid, start, goal) => {
     ];
 
     for (const [dr,dc] of directions) {
-
       const newRow = node.row + dr;
       const newCol = node.col + dc;
 
@@ -37,25 +33,29 @@ export const bfs = (grid, start, goal) => {
         newCol >= 0 &&
         newCol < grid[0].length
       ) {
-
         const id = key(newRow,newCol);
 
         if (!visited.has(id)) {
-
           visited.add(id);
-
           queue.push({row:newRow,col:newCol});
-
           parents[id] = node;
-
         }
-
       }
-
     }
-
   }
 
-  return { order, parents };
+  // Reconstruct path from goal to start
+  const path = [];
+  let current = goal;
+  const goalKey = key(goal.row, goal.col);
+  
+  if (parents[goalKey]) {
+    while (current) {
+      path.unshift(current);
+      const currentKey = key(current.row, current.col);
+      current = parents[currentKey];
+    }
+  }
 
+  return { order, path };
 };

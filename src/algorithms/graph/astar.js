@@ -1,10 +1,10 @@
 export const astar = (grid, start, goal) => {
-
   const rows = grid.length;
   const cols = grid[0].length;
 
   const openSet = [start];
   const visited = new Set();
+  const parents = {};
   const order = [];
 
   const key = (r,c)=>`${r}-${c}`;
@@ -27,7 +27,6 @@ export const astar = (grid, start, goal) => {
   fScore[key(start.row,start.col)] = heuristic(start,goal);
 
   while(openSet.length>0){
-
     openSet.sort((a,b)=>fScore[key(a.row,a.col)] - fScore[key(b.row,b.col)]);
 
     const current = openSet.shift();
@@ -50,7 +49,6 @@ export const astar = (grid, start, goal) => {
     ];
 
     for(const [dr,dc] of directions){
-
       const nr=current.row+dr;
       const nc=current.col+dc;
 
@@ -59,25 +57,30 @@ export const astar = (grid, start, goal) => {
         nc>=0 && nc<cols &&
         grid[nr][nc].type!=="wall"
       ){
-
         const tentative = gScore[id] + 1;
 
         if(tentative < gScore[key(nr,nc)]){
-
           gScore[key(nr,nc)] = tentative;
-
           fScore[key(nr,nc)] = tentative + heuristic({row:nr,col:nc},goal);
-
+          parents[key(nr,nc)] = current;
           openSet.push({row:nr,col:nc});
-
         }
-
       }
-
     }
-
   }
 
-  return order;
+  // Reconstruct path from goal to start
+  const path = [];
+  let current = goal;
+  const goalKey = key(goal.row, goal.col);
+  
+  if (parents[goalKey]) {
+    while (current) {
+      path.unshift(current);
+      const currentKey = key(current.row, current.col);
+      current = parents[currentKey];
+    }
+  }
 
+  return { order, path };
 };
